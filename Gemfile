@@ -1,19 +1,34 @@
-group :default do
-  gem "pg" # PostgreSQL
-  gem "graphql" # GraphQL API
-  gem "sidekiq" # Background jobs
-  gem "rack-cors" # CORS support
-end
+source "https://rubygems.org"
 
-group :development, :test do
-  gem "rubocop", require: false # Code style checker
-  gem "rubocop-rails", require: false # Rails-specific RuboCop rules
-  gem "brakeman", require: false # Security scanner
-  gem "bundler-audit", require: false # Dependency security checker
+group :default do
+  gem "rails", "~> 8.0.1"
+  gem "puma", ">= 5.0"
+  gem "tzinfo-data", platforms: %i[ windows jruby ]
+  gem "solid_cache"
+  gem "solid_queue"
+  gem "solid_cable"
+  gem "bootsnap", require: false
+  gem "kamal", require: false
+  gem "thruster", require: false
+  gem 'pg'
+  gem 'graphql'
+  gem 'sidekiq'
 end
 
 group :authentication do
-  gem "devise" # User authentication
-  gem "jwt" # JSON Web Token support
-  gem "omniauth-auth0" # Auth0 integration
+  gem 'devise'
+  gem 'jwt'
+  gem 'omniauth-auth0'
+end
+
+group :development, :production do
+  gem 'rack-cors'
+end
+
+group :development, :test do
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+  gem "rubocop-rails-omakase", require: false
+  gem 'brakeman', require: false
+  gem 'bundler-audit', require: false
+  gem 'dotenv-rails'
 end
