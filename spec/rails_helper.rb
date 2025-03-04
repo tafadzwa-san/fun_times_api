@@ -41,6 +41,20 @@ RSpec.configure do |config|
     Rails.root.join('spec/fixtures')
   ]
 
+  # config.include Warden::Test::Helpers
+
+  # config.before(:each, type: :request) do
+  #   Warden.test_mode!
+  # end
+
+  # config.after(:each, type: :request) do
+  #   Warden.test_reset!
+  # end
+
+  # config.before(:each, type: :request) do
+  #   Warden::JWTAuth::Middleware.new(nil).call({})
+  # end
+
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
   # instead of true.

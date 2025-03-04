@@ -2,8 +2,6 @@
 
 module Api
   class TradesController < ApplicationController
-    include Authentication
-
     def index
       render json: { message: 'Trades API is working' }, status: :ok
     end

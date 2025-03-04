@@ -7,7 +7,7 @@ require 'rails/all'
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
-
+Dotenv::Rails.load if defined?(Dotenv)
 module CryptoTraderApi
   class Application < Rails::Application
     config.active_record.query_log_tags_enabled = true

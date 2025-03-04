@@ -25,3 +25,5 @@ Style/Documentation:
   Enabled: false
 GraphQL/ObjectDescription:
   Enabled: false
+RSpecRails/InferredSpecType:
+  Enabled: false
