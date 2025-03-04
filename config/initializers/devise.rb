@@ -8,7 +8,7 @@
 #
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
-Devise.setup do |config|
+Devise.setup do |config| # rubocop:disable Metrics/BlockLength
   # The secret key used by Devise. Devise uses this key to generate
   # random tokens. Changing this key will render invalid all existing
   # confirmation, reset password and unlock tokens in the database.
@@ -19,6 +19,8 @@ Devise.setup do |config|
   # ==> Controller configuration
   # Configure the parent class to the devise controllers.
   # config.parent_controller = 'DeviseController'
+
+  config.navigational_formats = []
 
   # ==> Mailer Configuration
   # Configure the e-mail address which will be shown in Devise::Mailer,
@@ -267,12 +269,23 @@ Devise.setup do |config|
 
   # The default HTTP method used to sign out a resource. Default is :delete.
   config.sign_out_via = :delete
+
+  # Ensure Devise uses JWT authentication
   config.jwt do |jwt|
-    jwt.secret = ENV.fetch('AUTH0_CLIENT_SECRET', nil)
-    jwt.dispatch_requests = [['POST', %r{^/api/login$}]]
-    jwt.revocation_requests = [['DELETE', %r{^/api/logout$}]]
+    jwt.secret = ENV.fetch('DEVISE_JWT_SECRET_KEY') { Rails.application.credentials.devise_jwt_secret_key }
+    jwt.dispatch_requests = [['POST', %r{^/users/sign_in$}]]
+    jwt.revocation_requests = [['DELETE', %r{^/users/sign_out$}]]
+    jwt.expiration_time = 1.day.to_i
   end
 
+  # Ensure Devise does NOT use session storage for API requests
+
+  config.skip_session_storage = %i[http_auth params_auth cookie_store]
+
+  config.warden do |manager|
+    manager.intercept_401 = false
+    manager.scope_defaults :user, store: false
+  end
   # ==> OmniAuth
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
