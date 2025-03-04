@@ -10,25 +10,23 @@ group :default do
   gem "bootsnap", require: false
   gem "kamal", require: false
   gem "thruster", require: false
-  gem 'pg'
-  gem 'graphql'
-  gem 'sidekiq'
-end
-
-group :authentication do
-  gem 'devise'
-  gem 'jwt'
-  gem 'omniauth-auth0'
-end
-
-group :development, :production do
-  gem 'rack-cors'
+  gem "pg"
+  gem "graphql"
+  gem "sidekiq"
+  gem "devise"
+  gem "jwt"
+  gem "omniauth-auth0"
+  gem "rack-cors"
+  gem "sorbet-runtime"
+  gem "tapioca", require: false
+  gem "devise-jwt"
 end
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "rubocop-rails-omakase", require: false
-  gem 'brakeman', require: false
-  gem 'bundler-audit', require: false
-  gem 'dotenv-rails'
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
+  gem "dotenv-rails"
+  gem "sorbet"
 end
