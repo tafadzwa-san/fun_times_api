@@ -27,3 +27,7 @@ GraphQL/ObjectDescription:
   Enabled: false
 RSpecRails/InferredSpecType:
   Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
