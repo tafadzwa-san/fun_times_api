@@ -6,7 +6,7 @@ module Services
       ADAPTERS = [
         Services::Sentiments::Adapters::LunarCrush,
         Services::Sentiments::Adapters::Santiment,
-        Services::Sentiments::Adapters::Altfins
+        Services::Sentiments::Adapters::Senticrypt
       ].freeze
 
       def initialize(coin_symbol)
@@ -17,20 +17,19 @@ module Services
         results = ADAPTERS.map { |adapter| fetch_from_adapter(adapter) }
 
         valid_results = results.reject { |result| result[:error] }
-        errors = results.select { |res| res[:error] }
 
         if valid_results.empty?
           return {
             success: false,
             sentiment_scores: [],
-            error: errors.pluck(:error).join(', ').presence || 'No valid sentiment data available'
+            error: results.pluck(:error).compact.uniq.join(', ')
           }
         end
 
         {
           success: true,
           sentiment_scores: valid_results,
-          errors: errors
+          errors: results.select { |res| res[:error] }
         }
       end
 
@@ -38,10 +37,8 @@ module Services
 
       def fetch_from_adapter(adapter)
         adapter.new(@coin_symbol).fetch_sentiment
-      rescue Errors::LunarCrushError, Errors::SantimentError, Errors::AltfinsError => e
-        { source: adapter.name.demodulize, error: e.message }
       rescue StandardError => e
-        { source: adapter.name.demodulize, error: "Unexpected error: #{e.message}" }
+        { source: adapter.name.demodulize, error: "Error fetching sentiment: #{e.message}" }
       end
     end
   end

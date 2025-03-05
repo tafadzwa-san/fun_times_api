@@ -34,10 +34,10 @@ RSpec.describe Queries::SentimentQuery, type: :request do
                                 fetch_sentiment: { source: 'Santiment', score: 70.3 }
                               ))
 
-    allow(Services::Sentiments::Adapters::Altfins).to receive(:new)
+    allow(Services::Sentiments::Adapters::Senticrypt).to receive(:new)
       .with('BTC').and_return(instance_double(
-                                Services::Sentiments::Adapters::Altfins,
-                                fetch_sentiment: { source: 'Altfins', score: 65.2 }
+                                Services::Sentiments::Adapters::Senticrypt,
+                                fetch_sentiment: { source: 'Senticrypt', score: 65.2 }
                               ))
   end
 
@@ -53,7 +53,7 @@ RSpec.describe Queries::SentimentQuery, type: :request do
       expect(sentiment_data['sentimentScores']).to contain_exactly(
         { 'source' => 'LunarCrush', 'score' => 85.6 },
         { 'source' => 'Santiment', 'score' => 70.3 },
-        { 'source' => 'Altfins', 'score' => 65.2 }
+        { 'source' => 'Senticrypt', 'score' => 65.2 }
       )
       expect(sentiment_data['error']).to be_nil
     end
@@ -68,9 +68,9 @@ RSpec.describe Queries::SentimentQuery, type: :request do
           .and_return(instance_double(Services::Sentiments::Adapters::Santiment,
                                       fetch_sentiment: { source: 'Santiment', error: 'Invalid API Key' }))
 
-        allow(Services::Sentiments::Adapters::Altfins).to receive(:new)
-          .and_return(instance_double(Services::Sentiments::Adapters::Altfins,
-                                      fetch_sentiment: { source: 'Altfins', error: 'Service Unavailable' }))
+        allow(Services::Sentiments::Adapters::Senticrypt).to receive(:new)
+          .and_return(instance_double(Services::Sentiments::Adapters::Senticrypt,
+                                      fetch_sentiment: { source: 'Senticrypt', error: 'Service Unavailable' }))
       end
 
       it 'returns an error message with details' do
