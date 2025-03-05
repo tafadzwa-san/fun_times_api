@@ -6,6 +6,7 @@ group :default do
   gem 'bootsnap', require: false
   gem 'devise'
   gem 'devise-jwt'
+  gem 'faraday', '~> 2.12'
   gem 'graphql'
   gem 'jwt'
   gem 'kamal', require: false
@@ -42,4 +43,5 @@ group :development, :test do
   gem 'rubocop-rspec_rails'
   gem 'simplecov', require: false
   gem 'sorbet'
+  gem 'webmock'
 end

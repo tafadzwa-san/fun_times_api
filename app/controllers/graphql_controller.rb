@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 class GraphqlController < ApplicationController
-  include Authentication
+  skip_before_action :authenticate_user!, only: [:execute]
 
   def execute
     variables = ensure_hash(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
 
-    result = CryptoTraderSchema.execute(
+    result = CryptoTraderApiSchema.execute(
       query,
       variables: variables,
       context: { current_user: current_user },
@@ -16,5 +16,20 @@ class GraphqlController < ApplicationController
     )
 
     render json: result
+  rescue StandardError => e
+    render json: { error: "GraphQL Execution Error: #{e.message}" }, status: :unprocessable_entity
+  end
+
+  private
+
+  def ensure_hash(ambiguous_param)
+    case ambiguous_param
+    when String
+      ambiguous_param.present? ? JSON.parse(ambiguous_param) : {}
+    when Hash, nil
+      ambiguous_param
+    else
+      raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
+    end
   end
 end

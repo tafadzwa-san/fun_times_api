@@ -10,6 +10,10 @@ Bundler.require(*Rails.groups)
 Dotenv::Rails.load if defined?(Dotenv)
 module CryptoTraderApi
   class Application < Rails::Application
+    # Add GraphQL directory to autoload paths
+    config.autoload_paths << Rails.root.join('app/graphql')
+    config.autoload_paths << Rails.root.join('lib')
+
     config.active_record.query_log_tags_enabled = true
     config.active_record.query_log_tags = [
       # Rails query log tags:

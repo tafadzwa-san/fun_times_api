@@ -31,3 +31,7 @@ RSpec/MultipleExpectations:
   Enabled: false
 RSpec/ExampleLength:
   Enabled: false
+GraphQL/ArgumentDescription:
+  Enabled: false
+GraphQL/FieldDescription:
+  Enabled: false

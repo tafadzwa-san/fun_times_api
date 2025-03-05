@@ -4,6 +4,7 @@
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
+
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
 # Uncomment the line below in case you have `--require rails_helper` in the `.rspec` file
@@ -27,6 +28,8 @@ require 'rspec/rails'
 #
 # Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
 Rails.root.glob('spec/support/**/*.rb').each { |f| require f }
+Rails.root.glob('app/services/**/*.rb').sort.each { |f| require f }
+Rails.root.glob('app/graphql/**/*.rb').each { |file| require file }
 
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
@@ -41,6 +44,9 @@ RSpec.configure do |config|
     Rails.root.join('spec/fixtures')
   ]
 
+  config.before do
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
   # config.include Warden::Test::Helpers
 
   # config.before(:each, type: :request) do
