@@ -26,28 +26,22 @@ RSpec.describe Services::Sentiments::Analysis, type: :service do
   end
 
   describe '#fetch_sentiment' do
-    it 'aggregates sentiment from multiple sources' do
-      result = service.fetch_sentiment
-      expect(result[:success]).to be true
-      expect(result[:sentiment_scores]).to contain_exactly(
-        { source: 'LunarCrush', score: 85.6 },
-        { source: 'Santiment', score: 70.3 },
-        { source: 'SentiCrypt', score: 60.5 }
-      )
-    end
-
-    context 'when all adapters fail' do
+    context 'when one adapter fails' do
       before do
-        allow(Services::Sentiments::Adapters::LunarCrush).to receive(:new).and_raise(StandardError, 'LunarCrush Error')
-        allow(Services::Sentiments::Adapters::Santiment).to receive(:new).and_raise(StandardError, 'Santiment Error')
-        allow(Services::Sentiments::Adapters::Senticrypt).to receive(:new).and_raise(StandardError, 'SentiCrypt Error')
+        allow(Services::Sentiments::Adapters::LunarCrush).to receive(:new).and_raise(Errors::LunarCrushError,
+                                                                                     'LunarCrush Error')
       end
 
-      it 'returns an error response' do
+      it 'continues processing with other sources' do
         result = service.fetch_sentiment
-        expect(result[:success]).to be false
-        expect(result[:sentiment_scores]).to eq([])
-        expect(result[:error]).to include('LunarCrush Error', 'Santiment Error', 'SentiCrypt Error')
+
+        expect(result[:success]).to be true
+        expect(result[:sentiment_scores]).to include(
+          { source: 'Santiment', score: 70.3 },
+          { source: 'SentiCrypt', score: 60.5 }
+        )
+        expect(result[:sentiment_scores]).not_to include(hash_including(source: 'LunarCrush'))
+        expect(result[:errors]).to include({ source: 'LunarCrush', error: 'LunarCrush Error' })
       end
     end
   end

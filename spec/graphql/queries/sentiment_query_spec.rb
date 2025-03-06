@@ -15,7 +15,10 @@ RSpec.describe Queries::SentimentQuery, type: :request do
             source
             score
           }
-          error
+          errors {
+            source
+            error
+          }
         }
       }
     GQL
@@ -82,7 +85,11 @@ RSpec.describe Queries::SentimentQuery, type: :request do
         expect(response).to have_http_status(:ok)
         expect(sentiment_data['success']).to be false
         expect(sentiment_data['sentimentScores']).to eq([])
-        expect(sentiment_data['error']).to eq('API Timeout, Invalid API Key, Service Unavailable')
+        expect(sentiment_data['errors']).to contain_exactly(
+          { 'error' => 'API Timeout', 'source' => 'LunarCrush' },
+          { 'error' => 'Invalid API Key', 'source' => 'Santiment' },
+          { 'error' => 'Service Unavailable', 'source' => 'Senticrypt' }
+        )
       end
     end
   end

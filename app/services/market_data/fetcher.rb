@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
 module Services
-  module Sentiments
-    class Analysis
+  module MarketData
+    class Fetcher
       ADAPTERS = [
-        Services::Sentiments::Adapters::LunarCrush,
-        Services::Sentiments::Adapters::Santiment,
-        Services::Sentiments::Adapters::Senticrypt
+        Services::MarketData::Adapters::Binance,
+        Services::MarketData::Adapters::KuCoin,
+        Services::MarketData::Adapters::CoinGecko
       ].freeze
 
       def initialize(coin_symbol)
-        @coin_symbol = coin_symbol
+        @coin_symbol = coin_symbol.upcase
       end
 
-      def fetch_sentiment
+      def fetch_data
         results = ADAPTERS.map { |adapter| fetch_from_adapter(adapter) }
 
         valid_results = results.reject { |result| result[:error] }
@@ -21,7 +21,7 @@ module Services
 
         {
           success: valid_results.any?,
-          sentiment_scores: valid_results,
+          market_data: valid_results,
           errors: errors.presence || []
         }
       end
@@ -29,7 +29,7 @@ module Services
       private
 
       def fetch_from_adapter(adapter)
-        adapter.new(@coin_symbol).fetch_sentiment
+        adapter.new(@coin_symbol).fetch_market_data
       rescue StandardError => e
         { source: adapter.name.demodulize, error: e.message }
       end
