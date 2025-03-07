@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require_relative 'adapters/binance'
+require_relative 'adapters/ku_coin'
+require_relative 'adapters/coin_gecko'
+
 module Services
   module MarketData
     class Fetcher

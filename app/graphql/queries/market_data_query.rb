@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../../services/market_data/fetcher'
+
 module Queries
   class MarketDataQuery < Queries::BaseQuery
     type Types::MarketDataResultType, null: false

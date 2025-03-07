@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class CryptoTraderApiSchema < GraphQL::Schema
-  query(Types::QueryType)
+  query Types::QueryType
+  mutation Types::MutationType
 
   # Enable batch loading for performance
   use GraphQL::Dataloader

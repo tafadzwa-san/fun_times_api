@@ -29,7 +29,6 @@ require 'rspec/rails'
 # Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
 Rails.root.glob('spec/support/**/*.rb').each { |f| require f }
 Rails.root.glob('app/services/**/*.rb').sort.each { |f| require f }
-Rails.root.glob('app/graphql/**/*.rb').each { |file| require file }
 
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
@@ -43,6 +42,10 @@ RSpec.configure do |config|
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')
   ]
+
+  config.before(:suite) do
+    GraphQL::Schema.types.clear
+  end
 
   config.before do
     WebMock.disable_net_connect!(allow_localhost: true)

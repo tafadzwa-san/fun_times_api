@@ -3,3 +3,5 @@
 --ignore=tmp/
 --ignore=vendor/
 --ignore=Gemfile
+--ignore=app/graphql/**
+

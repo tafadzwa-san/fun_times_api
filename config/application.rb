@@ -13,6 +13,7 @@ module CryptoTraderApi
     # Add GraphQL directory to autoload paths
     config.autoload_paths << Rails.root.join('app/graphql')
     config.autoload_paths << Rails.root.join('lib')
+    config.graphql.schema_dump_file = Rails.root.join('app/graphql/schema.graphql')
 
     config.active_record.query_log_tags_enabled = true
     config.active_record.query_log_tags = [

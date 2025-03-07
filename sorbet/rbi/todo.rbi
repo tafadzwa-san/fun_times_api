@@ -4,8 +4,5 @@
 
 # typed: false
 
-module Bundler::ConnectionPool::ForkTracker; end
 module Bundler::FetchMetadata; end
 module Bundler::MatchMetadata; end
-module Sidekiq::Process; end
-module Sidekiq::SortedEntry; end
