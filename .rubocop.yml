@@ -8,15 +8,16 @@ inherit_from: .rubocop_todo.yml
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
 # Layout/SpaceInsideArrayLiteralBrackets:
 #   Enabled: false
-
-require:
-  - rubocop-factory_bot
-  - rubocop-graphql
-  - rubocop-rspec_rails
-
 plugins:
   - rubocop-rails
   - rubocop-rspec
+  - rubocop-performance
+  - rubocop-factory_bot
+
+require:
+  - rubocop-rspec_rails
+  - rubocop-sorbet
+  - rubocop-graphql
 
 AllCops:
   NewCops: enable

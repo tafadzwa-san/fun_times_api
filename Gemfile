@@ -7,6 +7,7 @@ group :default do
   gem 'devise'
   gem 'devise-jwt'
   gem 'faraday', '~> 2.12'
+  gem 'graphql'
   gem 'jwt'
   gem 'kamal', require: false
   gem 'omniauth-auth0'
@@ -36,10 +37,12 @@ group :development, :test do
   gem 'rubocop', require: false
   gem 'rubocop-factory_bot'
   gem 'rubocop-graphql'
+  gem 'rubocop-performance'
   gem 'rubocop-rails'
   gem 'rubocop-rails-omakase', require: false
   gem 'rubocop-rspec'
   gem 'rubocop-rspec_rails'
+  gem 'rubocop-sorbet'
   gem 'simplecov', require: false
   gem 'sorbet'
   gem 'webmock'
