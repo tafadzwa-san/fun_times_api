@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_04_062241) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_08_044615) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,7 +22,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_04_062241) do
     t.datetime "remember_created_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "jti"
+    t.string "auth0_uid"
+    t.string "jti", default: "7e702be7-b4b2-4ddb-a086-1beee7f51103", null: false
+    t.string "name"
+    t.index ["auth0_uid"], name: "index_users_on_auth0_uid"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["jti"], name: "index_users_on_jti"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true

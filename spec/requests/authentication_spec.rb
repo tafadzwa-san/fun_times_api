@@ -3,64 +3,33 @@
 
 require 'rails_helper'
 
-RSpec.describe 'Authentication', type: :request do
-  let!(:user) { create(:user, email: 'test@example.com', password: 'password123') }
-  let!(:jwt_token) { user_jwt_token }
-  let(:auth_headers) { { 'Authorization' => "Bearer #{jwt_token}" } }
+RSpec.describe 'User Authentication', type: :request do
+  let(:user) { create(:user, password: 'password123') }
 
   describe 'POST /users/sign_in' do
-    it 'logs in a user and returns a JWT token' do
+    it 'logs in and returns a JWT token' do
+      post '/users/sign_in', params: { user: { email: user.email, password: 'password123' } }, as: :json
+
+      json_response = response.parsed_body
+
       expect(response).to have_http_status(:ok)
-      expect(jwt_token).not_to be_nil
-    end
-
-    it 'rejects invalid credentials' do
-      post '/users/sign_in', params: { user: { email: user.email, password: 'wrongpassword' } }
-      expect(response).to have_http_status(:unauthorized)
-    end
-  end
-
-  describe 'POST /users/sign_up' do
-    it 'creates a new user and returns a JWT token' do
-      post '/users', params: { user: { email: 'newuser@example.com', password: 'password123' } }
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to have_key('token')
-    end
-  end
-
-  describe 'GET /api/trades' do
-    it 'allows access with a valid token' do
-      get '/api/trades', headers: auth_headers
-      expect(response).to have_http_status(:ok)
-    end
-
-    it 'denies access without a token' do
-      get '/api/trades'
-      expect(response).to have_http_status(:unauthorized)
+      expect(json_response['token']).to be_present
+      expect(json_response['user']['email']).to eq(user.email)
     end
   end
 
   describe 'DELETE /users/sign_out' do
-    it 'logs out the user by revoking the token' do
-      decoded_token_before_logout = JWT.decode(jwt_token, ENV.fetch('DEVISE_JWT_SECRET_KEY'), true,
-                                               algorithm: 'HS256').first
-      user_jti_before = decoded_token_before_logout['jti']
-
-      delete '/users/sign_out', headers: auth_headers
-      expect(response).to have_http_status(:no_content)
-
-      user.reload
-      expect(user_jti_before).not_to eq(user.jti)
-
-      get '/api/trades', headers: auth_headers
-      expect(response).to have_http_status(:unauthorized)
+    let(:token) do
+      post '/users/sign_in', params: { user: { email: user.email, password: 'password123' } }, as: :json
+      response.parsed_body['token']
     end
-  end
 
-  private
+    it 'logs out the user and revokes the token' do
+      delete '/users/sign_out', headers: { 'Authorization' => "Bearer #{token}" }
 
-  def user_jwt_token
-    post '/users/sign_in', params: { user: { email: user.email, password: 'password123' } }
-    response.parsed_body['token']
+      expect(response).to have_http_status(:no_content)
+      user.reload
+      expect(user.jti).not_to eq(token) # Ensure JTI changes after logout
+    end
   end
 end

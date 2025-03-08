@@ -26,7 +26,8 @@ module Authentication
       return
     end
 
-    @current_user = User.find_by(id: decoded_payload['sub'])
+    @current_user = User.find_by(auth0_uid: decoded_payload['sub']) || User.find_by(id: decoded_payload['sub'])
+
     render json: { error: 'User not found' }, status: :unauthorized unless @current_user
   end
 

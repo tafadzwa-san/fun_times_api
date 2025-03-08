@@ -9,8 +9,11 @@ module Users
 
     def respond_with(resource, _opts = {})
       if resource.persisted?
-        token = request.env['warden-jwt_auth.token']
-        render json: { token: token, user: resource }, status: :created
+        render json: {
+          message: 'Account created successfully',
+          user: resource,
+          token: request.env['warden-jwt_auth.token']
+        }, status: :created
       else
         render json: { error: resource.errors.full_messages }, status: :unprocessable_entity
       end

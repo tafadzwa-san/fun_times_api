@@ -17,14 +17,19 @@ module Users
 
     def respond_to_on_destroy
       if current_user
-        old_jti = current_user.jti
         current_user.update!(jti: SecureRandom.uuid)
-        Rails.logger.debug { "🔄 JTI Updated from #{old_jti} → #{current_user.jti}" }
-
         head :no_content
       else
         render json: { error: 'Unauthorized' }, status: :unauthorized
       end
+    end
+
+    def track_session(user, jti)
+      UserSession.create!(
+        user: user,
+        jti: jti,
+        expires_at: 1.hour.from_now
+      )
     end
   end
 end
