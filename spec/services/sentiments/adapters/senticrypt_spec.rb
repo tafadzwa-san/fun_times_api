@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::Sentiments::Adapters::Senticrypt, type: :service do
+RSpec.describe Sentiments::Adapters::Senticrypt, type: :service do
   subject(:adapter) { described_class.new('BTC') }
 
   let(:api_url) { 'https://api.senticrypt.com/v1/sentiment?symbol=BTC' }

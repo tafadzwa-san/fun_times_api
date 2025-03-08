@@ -7,7 +7,6 @@ group :default do
   gem 'devise'
   gem 'devise-jwt'
   gem 'faraday', '~> 2.12'
-  gem 'graphql'
   gem 'jwt'
   gem 'kamal', require: false
   gem 'omniauth-auth0'

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::Trading::Adapters::Binance do
+RSpec.describe Trading::Adapters::Binance do
   subject(:adapter) { described_class.new('BTCUSDT', action, 0.5, price) }
 
   let(:action) { 'BUY' }

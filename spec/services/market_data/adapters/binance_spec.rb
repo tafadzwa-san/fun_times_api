@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::MarketData::Adapters::Binance do
+RSpec.describe MarketData::Adapters::Binance do
   subject(:adapter) { described_class.new('BTCUSDT') }
 
   describe '#fetch_market_data' do

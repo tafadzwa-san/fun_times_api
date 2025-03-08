@@ -8,16 +8,11 @@ require 'rails/all'
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 Dotenv::Rails.load if defined?(Dotenv)
+
 module CryptoTraderApi
   class Application < Rails::Application
-    # Add GraphQL directory to autoload paths
-    config.autoload_paths << Rails.root.join('app/graphql')
-    config.autoload_paths << Rails.root.join('lib')
-    config.graphql.schema_dump_file = Rails.root.join('app/graphql/schema.graphql')
-
     config.active_record.query_log_tags_enabled = true
     config.active_record.query_log_tags = [
-      # Rails query log tags:
       :application, :controller, :action, :job,
       # GraphQL-Ruby query log tags:
       { current_graphql_operation: -> { GraphQL::Current.operation_name },

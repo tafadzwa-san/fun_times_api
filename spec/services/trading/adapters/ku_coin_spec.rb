@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::Trading::Adapters::KuCoin do
+RSpec.describe Trading::Adapters::KuCoin do
   subject(:adapter) { described_class.new('BTC-USDT', action, 0.5, price) }
 
   let(:action) { 'BUY' }

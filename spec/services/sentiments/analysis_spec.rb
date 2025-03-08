@@ -2,25 +2,25 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::Sentiments::Analysis, type: :service do
+RSpec.describe Sentiments::Analysis, type: :service do
   subject(:service) { described_class.new('BTC') }
 
   before do
-    allow(Services::Sentiments::Adapters::LunarCrush).to receive(:new)
+    allow(Sentiments::Adapters::LunarCrush).to receive(:new)
       .with('BTC').and_return(instance_double(
-                                Services::Sentiments::Adapters::LunarCrush,
+                                Sentiments::Adapters::LunarCrush,
                                 fetch_sentiment: { source: 'LunarCrush', score: 85.6 }
                               ))
 
-    allow(Services::Sentiments::Adapters::Santiment).to receive(:new)
+    allow(Sentiments::Adapters::Santiment).to receive(:new)
       .with('BTC').and_return(instance_double(
-                                Services::Sentiments::Adapters::Santiment,
+                                Sentiments::Adapters::Santiment,
                                 fetch_sentiment: { source: 'Santiment', score: 70.3 }
                               ))
 
-    allow(Services::Sentiments::Adapters::Senticrypt).to receive(:new)
+    allow(Sentiments::Adapters::Senticrypt).to receive(:new)
       .with('BTC').and_return(instance_double(
-                                Services::Sentiments::Adapters::Senticrypt,
+                                Sentiments::Adapters::Senticrypt,
                                 fetch_sentiment: { source: 'SentiCrypt', score: 60.5 }
                               ))
   end
@@ -28,8 +28,8 @@ RSpec.describe Services::Sentiments::Analysis, type: :service do
   describe '#fetch_sentiment' do
     context 'when one adapter fails' do
       before do
-        allow(Services::Sentiments::Adapters::LunarCrush).to receive(:new).and_raise(Errors::LunarCrushError,
-                                                                                     'LunarCrush Error')
+        allow(Sentiments::Adapters::LunarCrush).to receive(:new).and_raise(Errors::LunarCrushError,
+                                                                           'LunarCrush Error')
       end
 
       it 'continues processing with other sources' do

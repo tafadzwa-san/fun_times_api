@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::MarketData::Adapters::CoinGecko do
+RSpec.describe MarketData::Adapters::CoinGecko do
   subject(:adapter) { described_class.new('bitcoin') }
 
   describe '#fetch_market_data' do

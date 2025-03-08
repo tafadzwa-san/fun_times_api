@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'faraday'
 
-RSpec.describe Services::Sentiments::Adapters::Santiment, type: :service do
+RSpec.describe Sentiments::Adapters::Santiment, type: :service do
   subject(:service) { described_class.new('BTC') }
 
   let(:mock_response) do

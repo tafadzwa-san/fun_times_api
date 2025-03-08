@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Services::MarketData::Adapters::KuCoin do
+RSpec.describe MarketData::Adapters::KuCoin do
   subject(:adapter) { described_class.new('BTC-USDT') }
 
   describe '#fetch_market_data' do
