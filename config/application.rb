@@ -15,6 +15,9 @@ module CryptoTraderApi
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
     config.api_only = true
+    config.active_job.queue_adapter = :solid_queue
+    config.cache_store = :solid_cache_store
+
     config.session_store :cookie_store, key: '_yourapp_session' # Define a session store and key
     config.middleware.use ActionDispatch::Session::CookieStore, key: '_crypto_trader_api_session'
 

@@ -15,6 +15,8 @@ Rails.application.configure do
   # Full error reports are disabled.
   config.consider_all_requests_local = false
 
+  config.cache_store = :solid_cache_store
+
   # Cache assets for far-future expiry since they are all digest stamped.
   config.public_file_server.headers = { 'cache-control' => "public, max-age=#{1.year.to_i}" }
 
@@ -45,9 +47,6 @@ Rails.application.configure do
 
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
-
-  # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue

@@ -4,12 +4,22 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 development:
-  <<: *default
-  database: crypto_trader_api_development
+  primary:
+    <<: *default
+    database: crypto_trader_api_development
+  cache:
+    <<: *default
+    database: crypto_trader_api_development_cache
+    migrations_paths: db/cache_migrate
 
 test:
-  <<: *default
-  database: crypto_trader_api_test
+  primary:
+    <<: *default
+    database: crypto_trader_api_test
+  cache:
+    <<: *default
+    database: crypto_trader_api_test_cache
+    migrations_paths: db/cache_migrate
 
 production:
   primary: &primary_production
