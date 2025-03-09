@@ -12,6 +12,18 @@ Dotenv::Rails.load if defined?(Dotenv)
 
 module CryptoTraderApi
   class Application < Rails::Application
+    # Initialize configuration defaults for originally generated Rails version.
+    config.load_defaults 8.0
+    config.api_only = true
+    config.session_store :cookie_store, key: '_yourapp_session' # Define a session store and key
+    config.middleware.use ActionDispatch::Session::CookieStore, key: '_crypto_trader_api_session'
+
+    config.middleware.use Warden::Manager do |manager|
+      Devise.warden_config = manager
+      manager.default_strategies :jwt
+      manager.failure_app = Devise::FailureApp
+    end
+
     config.active_record.query_log_tags_enabled = true
     config.active_record.query_log_tags = [
       :application, :controller, :action, :job,
@@ -22,13 +34,6 @@ module CryptoTraderApi
         current_dataloader_source: -> { GraphQL::Current.dataloader_source_class }
       }
     ]
-    # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 8.0
-    config.middleware.use Warden::Manager do |manager|
-      Devise.warden_config = manager
-      manager.default_strategies :jwt
-      manager.failure_app = Devise::FailureApp
-    end
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.

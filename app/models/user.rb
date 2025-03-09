@@ -1,40 +1,29 @@
 # typed: false
 # frozen_string_literal: true
 
+# app/models/user.rb
 class User < ApplicationRecord
-  # Include JTI revocation strategy
   include Devise::JWT::RevocationStrategies::JTIMatcher
-
-  # Devise modules
   devise :database_authenticatable, :registerable, :recoverable,
          :rememberable, :validatable, :jwt_authenticatable,
-         jwt_revocation_strategy: self
+         :omniauthable, omniauth_providers: %i[auth0],
+                        jwt_revocation_strategy: self
 
-  devise :omniauthable, omniauth_providers: [:auth0] if Rails.env.development?
+  def self.from_auth0(auth)
+    email = auth.dig('info', 'email') || auth.dig('extra', 'raw_info', 'email')
+    uid = auth['uid'] || auth.dig('extra', 'raw_info', 'sub') # Fallback to 'sub' if 'uid' is missing
 
-  before_create :set_jti
+    return nil unless email.present? && uid.present? # Prevent returning nil
 
-  def self.from_auth0(auth_payload)
-    user = find_by(auth0_uid: auth_payload['sub']) || find_by(email: auth_payload['email'])
+    user = find_or_initialize_by(email: email)
 
-    if user.nil?
-      user = create!(
-        email: auth_payload['email'],
-        name: auth_payload['name'],
-        auth0_uid: auth_payload['sub'],
-        password: Devise.friendly_token[0, 20],
-        jti: SecureRandom.uuid
-      )
-    else
-      user.update!(jti: SecureRandom.uuid)
-    end
+    user.update!(
+      auth0_uid: uid,
+      name: auth.dig('info', 'name') || 'Unknown User',
+      password: Devise.friendly_token[0, 20],
+      jti: SecureRandom.uuid
+    )
 
     user
-  end
-
-  private
-
-  def set_jti
-    self.jti ||= SecureRandom.uuid
   end
 end
