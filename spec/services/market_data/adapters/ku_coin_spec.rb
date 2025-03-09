@@ -41,7 +41,7 @@ RSpec.describe MarketData::Adapters::KuCoin do
       end
 
       it 'raises a KuCoinError' do
-        expect { adapter.fetch_market_data }.to raise_error(Errors::KuCoinError, 'KuCoin API Error: 500')
+        expect { adapter.fetch_market_data }.to raise_error(Errors::KuCoinError, 'API Error: 500')
       end
     end
   end

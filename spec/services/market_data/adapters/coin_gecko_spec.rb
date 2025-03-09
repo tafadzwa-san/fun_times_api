@@ -39,7 +39,7 @@ RSpec.describe MarketData::Adapters::CoinGecko do
       end
 
       it 'raises a CoinGeckoError' do
-        expect { adapter.fetch_market_data }.to raise_error(Errors::CoinGeckoError, 'CoinGecko API Error: 500')
+        expect { adapter.fetch_market_data }.to raise_error(Errors::CoinGeckoError, 'API Error: 500')
       end
     end
   end

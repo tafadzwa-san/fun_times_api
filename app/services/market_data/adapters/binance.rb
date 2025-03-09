@@ -15,13 +15,13 @@ module MarketData
       def fetch_market_data
         response = request_market_data
 
-        raise Errors::BinanceError, "Binance API Error: #{response.status}" unless response.success?
+        raise Errors::BinanceError, "API Error: #{response.status}" unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        raise Errors::BinanceError, 'Binance API connection failed'
+        raise Errors::BinanceError, 'API connection failed'
       rescue JSON::ParserError
-        raise Errors::BinanceError, 'Invalid response format from Binance'
+        raise Errors::BinanceError, 'Invalid response format'
       rescue StandardError => e
         raise Errors::BinanceError, e.message
       end
@@ -34,6 +34,7 @@ module MarketData
 
       def parse_response(body)
         data = JSON.parse(body)
+        raise Errors::BinanceError, 'Market data missing' unless data
 
         {
           source: 'Binance',

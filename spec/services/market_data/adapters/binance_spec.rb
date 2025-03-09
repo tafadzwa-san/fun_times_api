@@ -39,7 +39,7 @@ RSpec.describe MarketData::Adapters::Binance do
       end
 
       it 'raises a BinanceError' do
-        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError, 'Binance API Error: 500')
+        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError, 'API Error: 500')
       end
     end
 
@@ -51,7 +51,7 @@ RSpec.describe MarketData::Adapters::Binance do
       end
 
       it 'raises a BinanceError for connection failure' do
-        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError, 'Binance API connection failed')
+        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError, 'API connection failed')
       end
     end
 
@@ -65,7 +65,7 @@ RSpec.describe MarketData::Adapters::Binance do
       it 'raises a BinanceError for invalid response' do
         expect do
           adapter.fetch_market_data
-        end.to raise_error(Errors::BinanceError, 'Invalid response format from Binance')
+        end.to raise_error(Errors::BinanceError, 'Invalid response format')
       end
     end
   end

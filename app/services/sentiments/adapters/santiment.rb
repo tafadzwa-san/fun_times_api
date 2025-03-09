@@ -16,15 +16,15 @@ module Sentiments
 
       def fetch_sentiment
         response = request_sentiment
-        raise Errors::SantimentError, 'Failed to fetch sentiment from Santiment' unless response.success?
+        raise Errors::SantimentError, 'Failed to fetch sentiment' unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        raise Errors::SantimentError, 'Santiment API is unreachable'
+        raise Errors::SantimentError, 'API is unreachable'
       rescue JSON::ParserError
-        raise Errors::SantimentError, 'Invalid response from Santiment'
+        raise Errors::SantimentError, 'Invalid response'
       rescue StandardError => e
-        raise Errors::SantimentError, "Unexpected error: #{e.message}"
+        raise Errors::SantimentError, e.message
       end
 
       private
@@ -36,7 +36,7 @@ module Sentiments
       def parse_response(body)
         data = JSON.parse(body)
         score = data.dig('data', 'getSentimentData', 'score')
-        raise Errors::SantimentError, 'Sentiment score missing' unless score
+        raise Errors::SantimentError, 'Score missing' unless score
 
         { source: 'Santiment', score: score }
       end

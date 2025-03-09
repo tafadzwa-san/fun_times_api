@@ -16,15 +16,15 @@ module Sentiments
 
       def fetch_sentiment
         response = request_sentiment
-        raise Errors::LunarCrushError, 'Failed to fetch sentiment from LunarCrush' unless response.success?
+        raise Errors::LunarCrushError, 'Failed to fetch sentiment' unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        raise Errors::LunarCrushError, 'LunarCrush API is unreachable'
+        raise Errors::LunarCrushError, 'API is unreachable'
       rescue JSON::ParserError
-        raise Errors::LunarCrushError, 'Invalid response from LunarCrush'
+        raise Errors::LunarCrushError, 'Invalid response'
       rescue StandardError => e
-        raise Errors::LunarCrushError, "Unexpected error: #{e.message}"
+        raise Errors::LunarCrushError, e.message
       end
 
       private
@@ -36,7 +36,7 @@ module Sentiments
       def parse_response(body)
         data = JSON.parse(body)
         score = data.dig('data', 0, 'galaxy_score')
-        raise Errors::LunarCrushError, 'Sentiment score missing' unless score
+        raise Errors::LunarCrushError, 'Score missing' unless score
 
         { source: 'LunarCrush', score: score }
       end

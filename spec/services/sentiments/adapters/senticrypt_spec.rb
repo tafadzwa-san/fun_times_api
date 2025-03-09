@@ -26,8 +26,7 @@ RSpec.describe Sentiments::Adapters::Senticrypt, type: :service do
     end
 
     it 'returns error' do
-      result = adapter.fetch_sentiment
-      expect(result[:error]).to eq('SentiCrypt request failed')
+      expect { adapter.fetch_sentiment }.to raise_error(Errors::SenticryptError, 'Failed to fetch sentiment')
     end
   end
 end

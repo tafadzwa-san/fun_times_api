@@ -16,13 +16,13 @@ module MarketData
       def fetch_market_data
         response = request_market_data
 
-        raise Errors::CoinGeckoError, "CoinGecko API Error: #{response.status}" unless response.success?
+        raise Errors::CoinGeckoError, "API Error: #{response.status}" unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        raise Errors::CoinGeckoError, 'CoinGecko API connection failed'
+        raise Errors::CoinGeckoError, 'API connection failed'
       rescue JSON::ParserError
-        raise Errors::CoinGeckoError, 'Invalid response format from CoinGecko'
+        raise Errors::CoinGeckoError, 'Invalid response format'
       rescue StandardError => e
         raise Errors::CoinGeckoError, e.message
       end
@@ -36,7 +36,7 @@ module MarketData
 
       def parse_response(body)
         data = JSON.parse(body)[@symbol]
-        return { error: 'Market data missing from CoinGecko' } unless data
+        raise Errors::CoinGeckoError, 'Market data missing' unless data
 
         {
           source: 'CoinGecko',

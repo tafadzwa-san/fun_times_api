@@ -15,13 +15,13 @@ module MarketData
       def fetch_market_data
         response = request_market_data
 
-        raise Errors::KuCoinError, "KuCoin API Error: #{response.status}" unless response.success?
+        raise Errors::KuCoinError, "API Error: #{response.status}" unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        raise Errors::KuCoinError, 'KuCoin API connection failed'
+        raise Errors::KuCoinError, 'API connection failed'
       rescue JSON::ParserError
-        raise Errors::KuCoinError, 'Invalid response format from KuCoin'
+        raise Errors::KuCoinError, 'Invalid response format'
       rescue StandardError => e
         raise Errors::KuCoinError, e.message
       end
@@ -34,7 +34,7 @@ module MarketData
 
       def parse_response(body)
         data = JSON.parse(body)['data']
-        return { error: 'Market data missing from KuCoin' } unless data
+        raise Errors::KuCoinError, 'Market data missing' unless data
 
         {
           source: 'KuCoin',

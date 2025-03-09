@@ -12,16 +12,15 @@ module Sentiments
 
       def fetch_sentiment
         response = Faraday.get(API_URL, { symbol: @coin_symbol })
-
-        return { error: 'SentiCrypt request failed' } unless response.success?
+        raise Errors::SenticryptError, 'Failed to fetch sentiment' unless response.success?
 
         parse_response(response.body)
       rescue Faraday::ConnectionFailed
-        { error: 'SentiCrypt API unreachable' }
+        raise Errors::SenticryptError, 'API is unreachable'
       rescue JSON::ParserError
-        { error: 'Invalid JSON response from SentiCrypt' }
+        raise Errors::SenticryptError, 'Invalid response'
       rescue StandardError => e
-        { error: "Unexpected error: #{e.message}" }
+        raise Errors::SenticryptError, e.message
       end
 
       private
@@ -29,7 +28,7 @@ module Sentiments
       def parse_response(body)
         data = JSON.parse(body)
         score = data['sentiment_score']
-        return { error: 'Sentiment score missing from SentiCrypt response' } unless score
+        raise Errors::SenticryptError, 'Score missing' unless score
 
         { source: 'SentiCrypt', score: score }
       end
