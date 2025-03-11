@@ -13,6 +13,8 @@ Dotenv::Rails.load if defined?(Dotenv)
 module CryptoTraderApi
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
+    config.autoload_paths << Rails.root.join('services')
+
     config.load_defaults 8.0
     config.api_only = true
     config.active_job.queue_adapter = :solid_queue

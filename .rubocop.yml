@@ -36,3 +36,11 @@ GraphQL/ArgumentDescription:
   Enabled: false
 GraphQL/FieldDescription:
   Enabled: false
+Metrics/AbcSize:
+  Enabled: false
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
