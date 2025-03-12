@@ -1,50 +1,50 @@
 # typed: false
 # frozen_string_literal: true
 
-require 'faraday'
-require 'json'
-
 module MarketData
   module Adapters
-    class CoinGecko
+    class CoinGecko < BaseAdapter
       API_URL = 'https://api.coingecko.com/api/v3'
 
-      def initialize(symbol)
-        @symbol = symbol.downcase
+      def initialize(symbol, config = {})
+        super
       end
 
       def fetch_market_data
-        response = request_market_data
+        response = get('simple/price', { ids: @symbol, vs_currencies: 'usd' })
 
-        raise Errors::CoinGeckoError, "API Error: #{response.status}" unless response.success?
+        raise Errors::CoinGeckoError, 'Market data missing' if response[@symbol].nil?
 
-        parse_response(response.body)
-      rescue Faraday::ConnectionFailed
-        raise Errors::CoinGeckoError, 'API connection failed'
-      rescue JSON::ParserError
-        raise Errors::CoinGeckoError, 'Invalid response format'
+        standardize_market_data(response[@symbol])
       rescue StandardError => e
         raise Errors::CoinGeckoError, e.message
       end
 
-      private
+      protected
 
-      def request_market_data
-        Faraday.get("#{API_URL}/simple/price",
-                    { ids: @symbol, vs_currencies: 'usd', include_market_cap: 'true', include_24hr_vol: 'true' })
+      def extract_price(data)
+        data['usd'].to_f
       end
 
-      def parse_response(body)
-        data = JSON.parse(body)[@symbol]
-        raise Errors::CoinGeckoError, 'Market data missing' unless data
+      def extract_volume(_data)
+        # CoinGecko does not provide volume in the simple price endpoint
+        nil
+      end
 
-        {
-          source: 'CoinGecko',
-          symbol: @symbol.upcase,
-          price: data['usd'].to_f,
-          market_cap: data['usd_market_cap'].to_f,
-          volume: data['usd_24h_vol'].to_f
-        }
+      def extract_additional_data(_data)
+        {}
+      end
+
+      def api_error_class
+        Errors::CoinGeckoError
+      end
+
+      private
+
+      def apply_authentication(request)
+        # CoinGecko does not require authentication for free tier
+        # If using a paid plan, add the API key to the query parameters
+        request.headers['X-Cg-Pro-Api-Key'] = @api_key
       end
     end
   end
