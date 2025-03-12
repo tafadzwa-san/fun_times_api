@@ -72,7 +72,7 @@ module Base
 
     def handle_response(response)
       unless response.success?
-        raise api_error_class.new("API Error: HTTP #{response.status}", response.status, adapter_name,
+        raise api_error_class.new("HTTP #{response.status}", response.status, adapter_name,
                                   response.body)
       end
 
