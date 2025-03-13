@@ -14,7 +14,7 @@ group :default do
   gem 'pg'
   gem 'puma', '>= 5.0'
   gem 'rack-cors'
-  gem 'rails', '~> 8.0.1'
+  gem 'rails', '~> 8.0.2'
   gem 'sidekiq'
   gem 'solid_cable'
   gem 'solid_cache'
