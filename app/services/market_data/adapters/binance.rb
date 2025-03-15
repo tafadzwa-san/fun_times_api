@@ -4,12 +4,6 @@
 module MarketData
   module Adapters
     class Binance < BaseAdapter
-      API_URL = 'https://api.binance.com'
-
-      def initialize(symbol, config = {})
-        super
-      end
-
       def fetch_market_data
         response = get('/api/v3/ticker/price', { symbol: @symbol })
 
@@ -40,17 +34,10 @@ module MarketData
       end
 
       def apply_authentication(request)
-        # Add timestamp for API requests that require authentication
         request.params[:timestamp] = (Time.now.to_f * 1000).to_i
-
-        # Create signature using HMAC-SHA256
         query_string = URI.encode_www_form(request.params)
         signature = OpenSSL::HMAC.hexdigest('sha256', @api_secret, query_string)
-
-        # Add signature to request
         request.params[:signature] = signature
-
-        # Add API key to headers
         request.headers['X-MBX-APIKEY'] = @api_key
       end
     end

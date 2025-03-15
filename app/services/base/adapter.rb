@@ -9,14 +9,23 @@ module Base
   class Adapter
     attr_reader :logger, :config
 
+    class << self
+      def adapter_name
+        name.demodulize.underscore.to_sym
+      end
+    end
+
     def initialize(config = {})
-      @base_url = config[:base_url]
-      @api_key = config[:api_key]
-      @api_secret = config[:api_secret]
-      @timeout = config[:timeout] || 30
-      @logger = config[:logger] || Logger.new($stdout)
-      @logger.level = config[:log_level] || Logger::INFO
-      @config = config
+      adapter_specific_config = config.dig(:adapters, self.class.adapter_name) || {}
+      merged_config = config.except(:adapters).merge(adapter_specific_config)
+
+      @base_url = merged_config[:base_url]
+      @api_key = merged_config[:api_key]
+      @api_secret = merged_config[:api_secret]
+      @timeout = merged_config[:timeout] || 30
+      @logger = merged_config[:logger] || Logger.new($stdout)
+      @logger.level = merged_config[:log_level] || Logger::INFO
+      @config = merged_config
 
       validate_configuration
     end
@@ -47,7 +56,6 @@ module Base
     end
 
     def request(method, endpoint, params = {}, payload = nil)
-      # If endpoint is a full URL, use it directly; otherwise treat as a path
       url = endpoint
       log_request(method, url, params, payload)
 
@@ -106,7 +114,7 @@ module Base
     end
 
     def adapter_name
-      self.class.name.demodulize
+      self.class.adapter_name
     end
 
     def handle_connection_error(exception, message)

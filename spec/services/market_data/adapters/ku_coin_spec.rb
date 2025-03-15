@@ -4,10 +4,7 @@
 require 'rails_helper'
 
 RSpec.describe MarketData::Adapters::KuCoin do
-  subject(:adapter) { described_class.new(symbol, config) }
-
-  let(:symbol) { 'BTC-USDT' }
-  let(:config) do
+  let(:adapter_config) do
     {
       api_key: 'test_api_key',
       api_secret: 'test_api_secret',
@@ -19,10 +16,25 @@ RSpec.describe MarketData::Adapters::KuCoin do
     }
   end
 
+  let(:symbol) { 'BTC-USDT' }
+  let(:adapter) { described_class.new(symbol, adapter_config) }
+  let(:timestamp) { Time.utc(2023, 3, 15, 12, 0, 0) }
+
+  before do
+    travel_to timestamp
+  end
+
+  it_behaves_like 'an adapter initialization', described_class, 'BTC-USDT', {
+    api_key: 'test_api_key',
+    api_secret: 'test_api_secret',
+    api_passphrase: 'test_api_passphrase',
+    base_url: 'https://api.kucoin.com/api/v1'
+  }
+
   describe '#fetch_market_data' do
     context 'when the request is successful' do
       before do
-        stub_request(:get, "#{config[:base_url]}/market/stats?symbol=#{symbol}")
+        stub_request(:get, "#{adapter_config[:base_url]}/market/stats?symbol=#{symbol}")
           .to_return(
             status: 200,
             body: {
@@ -42,8 +54,11 @@ RSpec.describe MarketData::Adapters::KuCoin do
       it 'returns the formatted market data' do
         result = adapter.fetch_market_data
 
+        expect(result[:source]).to eq(:ku_coin)
+        expect(result[:symbol]).to eq(symbol)
         expect(result[:price]).to eq(50_000.00)
         expect(result[:volume]).to eq(1000.0)
+        expect(result[:timestamp]).to be_a(Time)
         expect(result[:additional_data][:high_24h]).to eq(51_000.00)
         expect(result[:additional_data][:low_24h]).to eq(49_000.00)
         expect(result[:additional_data][:change_24h]).to eq(2.0)
@@ -52,7 +67,7 @@ RSpec.describe MarketData::Adapters::KuCoin do
 
     context 'when market data is missing' do
       before do
-        stub_request(:get, "#{config[:base_url]}/market/stats?symbol=#{symbol}")
+        stub_request(:get, "#{adapter_config[:base_url]}/market/stats?symbol=#{symbol}")
           .to_return(
             status: 200,
             body: {
@@ -70,7 +85,7 @@ RSpec.describe MarketData::Adapters::KuCoin do
 
     context 'when the API returns an error code' do
       before do
-        stub_request(:get, "#{config[:base_url]}/market/stats?symbol=#{symbol}")
+        stub_request(:get, "#{adapter_config[:base_url]}/market/stats?symbol=#{symbol}")
           .to_return(
             status: 400,
             body: {
@@ -88,7 +103,7 @@ RSpec.describe MarketData::Adapters::KuCoin do
 
     context 'when the request fails' do
       before do
-        stub_request(:get, "#{config[:base_url]}/market/stats?symbol=#{symbol}")
+        stub_request(:get, "#{adapter_config[:base_url]}/market/stats?symbol=#{symbol}")
           .to_timeout
       end
 

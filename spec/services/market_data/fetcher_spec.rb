@@ -3,157 +3,184 @@
 
 require 'rails_helper'
 
-RSpec.describe MarketData::Fetcher, type: :service do # rubocop:disable RSpec/MultipleMemoizedHelpers
-  subject(:fetcher) { described_class.new(coin_symbol, force_refresh: force_refresh) }
+RSpec.describe MarketData::Fetcher do
+  let(:symbol) { 'BTC' }
+  let(:options) { { force_refresh: false } }
+  let(:fetcher) { described_class.new(symbol, options) }
 
-  let(:coin_symbol) { 'BTC' }
-  let(:force_refresh) { false }
-  let(:cache_store) { SolidCache::Store.new }
-  let(:cache_key) { "market_data:#{coin_symbol.upcase}" }
-  let(:mock_market_data) { { source: 'Binance', price: 45_000 } }
-  let(:mock_error) { { source: 'Binance', error: 'Timeout error' } }
+  let(:binance_mock) { instance_double(MarketData::Adapters::Binance) }
+  let(:kucoin_mock) { instance_double(MarketData::Adapters::KuCoin) }
+  let(:coin_gecko_mock) { instance_double(MarketData::Adapters::CoinGecko) }
 
-  before do
-    cache_store.clear # Ensure clean cache
+  let(:timestamp) { Time.utc(2023, 3, 15, 12, 0, 0) }
 
-    # Stub external API calls
-    stub_request(:get, 'https://api.kucoin.com/api/v1/market/stats?symbol=BTC')
-      .to_return(
-        status: 200,
-        body: { price: '46000' }.to_json,
-        headers: { 'Content-Type' => 'application/json' }
-      )
-
-    stub_request(:get, 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-      .to_return(
-        status: 200,
-        body: { price: '45000' }.to_json,
-        headers: { 'Content-Type' => 'application/json' }
-      )
-
-    stub_request(:get, 'https://api.coingecko.com/api/v3/simple/price')
-      .with(
-        query: {
-          ids: 'btc',
-          vs_currencies: 'usd',
-          include_market_cap: 'true',
-          include_24hr_vol: 'true'
-        }
-      )
-      .to_return(
-        status: 200,
-        body: { btc: { usd: 44_000, market_cap: 100_000_000, '24h_vol' => 1_000_000 } }.to_json,
-        headers: { 'Content-Type' => 'application/json' }
-      )
-
-    allow(SolidCache::Store).to receive(:new).and_return(cache_store)
+  let(:binance_data) do
+    {
+      source: :binance,
+      symbol: 'BTCUSDT',
+      price: 50_000.0,
+      volume: nil,
+      timestamp: timestamp,
+      additional_data: {}
+    }
   end
 
-  describe '#fetch_data' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-    context 'when API responses are successful' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      let(:binance_adapter) { instance_double(MarketData::Adapters::Binance, fetch_market_data: mock_market_data) }
-      let(:kucoin_adapter) { instance_double(MarketData::Adapters::KuCoin, fetch_market_data: mock_market_data) }
-      let(:coingecko_adapter) { instance_double(MarketData::Adapters::CoinGecko, fetch_market_data: mock_market_data) }
+  let(:kucoin_data) do
+    {
+      source: :kucoin,
+      symbol: 'BTC-USDT',
+      price: 50_100.0,
+      volume: 1000.0,
+      timestamp: timestamp,
+      additional_data: {
+        high_24h: 51_000.0,
+        low_24h: 49_000.0,
+        change_24h: 2.5
+      }
+    }
+  end
 
+  let(:coin_gecko_data) do
+    {
+      source: :coin_gecko,
+      symbol: 'bitcoin',
+      price: 49_900.0,
+      volume: nil,
+      timestamp: timestamp,
+      additional_data: {}
+    }
+  end
+
+  let(:market_data_config) do
+    {
+      cache_ttl: 15,
+      adapters: {
+        binance: {
+          base_url: 'https://api.binance.com',
+          api_key: 'key',
+          api_secret: 'key',
+          timeout: 30
+        },
+        kucoin: {
+          base_url: 'https://api.kucoin.com/api/v1',
+          timeout: 30
+        },
+        coin_gecko: {
+          api_url: 'https://api.coingecko.com/api/v3',
+          timeout: 30
+        }
+      }
+    }
+  end
+
+  before do
+    travel_to timestamp
+    Rails.cache.clear
+
+    allow(Rails).to receive(:logger).and_return(instance_double(Logger).as_null_object)
+
+    allow(ServicesConfig).to receive_messages(
+      common_config: { log_level: 'INFO', timeout: 30 },
+      market_data_config: market_data_config
+    )
+  end
+
+  describe 'initialization' do
+    it 'initializes with the right adapters' do
+      expect(described_class.adapters).to include(MarketData::Adapters::Binance)
+      expect(described_class.adapters).to include(MarketData::Adapters::KuCoin)
+      expect(described_class.adapters).to include(MarketData::Adapters::CoinGecko)
+    end
+
+    it 'uses the MarketData config' do
+      expect(described_class.config).to eq(market_data_config)
+    end
+  end
+
+  describe '#call' do
+    context 'when first adapter succeeds' do
       before do
-        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_adapter)
-        allow(MarketData::Adapters::KuCoin).to receive(:new).and_return(kucoin_adapter)
-        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_return(coingecko_adapter)
+        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_mock)
+        allow(binance_mock).to receive(:fetch_market_data).and_return(binance_data)
+
+        allow(MarketData::Adapters::KuCoin).to receive(:new).and_return(kucoin_mock)
+        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_return(coin_gecko_mock)
+        allow(kucoin_mock).to receive(:fetch_market_data).and_raise('Should not be called')
+        allow(coin_gecko_mock).to receive(:fetch_market_data).and_raise('Should not be called')
       end
 
-      it 'returns aggregated market data' do
-        result = fetcher.fetch_data
-        expect(result[:success]).to be true
-        expect(result[:market_data].size).to eq(3)
+      it 'returns data from the first successful adapter' do
+        result = fetcher.call
+        expect(result).to eq(binance_data)
       end
 
-      it 'caches the successful response' do
-        result = fetcher.fetch_data
+      it 'caches the result' do
+        first_result = fetcher.call
+        second_result = fetcher.call
 
-        expect(result[:success]).to be true
-        expect(cache_store.read(cache_key)).not_to be_nil
-        expect(cache_store.read(cache_key)[:market_data]).not_to be_empty
+        expect(second_result).to eq(first_result)
+
+        expect(MarketData::Adapters::Binance).to have_received(:new).once
       end
     end
 
-    context 'when all API responses fail' do # rubocop:disable RSpec/MultipleMemoizedHelpers
+    context 'when first adapter fails but second succeeds' do
       before do
-        allow(MarketData::Adapters::Binance).to receive(:new).and_raise(StandardError, 'Timeout error')
-        allow(MarketData::Adapters::KuCoin).to receive(:new).and_raise(StandardError, 'Timeout error')
-        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_raise(StandardError, 'Timeout error')
+        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_mock)
+        allow(binance_mock).to receive(:fetch_market_data).and_raise(Errors::BinanceError.new('API error'))
+
+        allow(MarketData::Adapters::KuCoin).to receive(:new).and_return(kucoin_mock)
+        allow(kucoin_mock).to receive(:fetch_market_data).and_return(kucoin_data)
+
+        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_return(coin_gecko_mock)
+        allow(coin_gecko_mock).to receive(:fetch_market_data)
+          .and_raise(Errors::CoinGeckoError.new('CoinGecko API error'))
       end
 
-      it 'returns an error response' do
-        result = fetcher.fetch_data
-        expect(result[:success]).to be false
-        expect(result[:market_data]).to be_empty
-        expect(result[:errors].size).to eq(3)
-      end
-
-      it 'does not cache the failed response' do
-        fetcher.fetch_data
-        expect(cache_store.read(cache_key)).to be_nil
+      it 'falls back to the next successful adapter' do
+        result = fetcher.call
+        expect(result).to eq(kucoin_data)
       end
     end
 
-    context 'when cached data exists' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      let(:binance_adapter) { instance_spy(MarketData::Adapters::Binance) }
-      let(:kucoin_adapter) { instance_spy(MarketData::Adapters::KuCoin) }
-      let(:coingecko_adapter) { instance_spy(MarketData::Adapters::CoinGecko) }
-
+    context 'when all adapters fail' do
       before do
-        cache_store.write(cache_key, { success: true, market_data: [mock_market_data], errors: [] }, expires_in: 15)
+        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_mock)
+        allow(binance_mock).to receive(:fetch_market_data).and_raise(Errors::BinanceError.new('Binance API error'))
 
-        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_adapter)
-        allow(MarketData::Adapters::KuCoin).to receive(:new).and_return(kucoin_adapter)
-        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_return(coingecko_adapter)
+        allow(MarketData::Adapters::KuCoin).to receive(:new).and_return(kucoin_mock)
+        allow(kucoin_mock).to receive(:fetch_market_data).and_raise(Errors::KuCoinError.new('KuCoin API error'))
+
+        allow(MarketData::Adapters::CoinGecko).to receive(:new).and_return(coin_gecko_mock)
+        allow(coin_gecko_mock).to receive(:fetch_market_data)
+          .and_raise(Errors::CoinGeckoError.new('CoinGecko API error'))
       end
 
-      it 'returns cached data without making API calls' do
-        result = fetcher.fetch_data
-
-        expect(result[:market_data].size).to eq(1)
-
-        expect(binance_adapter).not_to have_received(:fetch_market_data)
-        expect(kucoin_adapter).not_to have_received(:fetch_market_data)
-        expect(coingecko_adapter).not_to have_received(:fetch_market_data)
+      it 'returns nil when all adapters fail' do
+        result = fetcher.call
+        expect(result).to be_nil
       end
     end
 
-    context 'when force refresh is enabled' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      let(:force_refresh) { true }
+    context 'when force_refresh is true' do
+      let(:options) { { force_refresh: true } }
 
       before do
-        cache_store.write(cache_key, { success: true, market_data: [mock_market_data], errors: [] }, expires_in: 15)
+        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_mock)
+        allow(binance_mock).to receive(:fetch_market_data).and_return(binance_data)
       end
 
-      it 'fetches new data and overwrites the cache' do
-        new_mock_market_data = { source: 'Binance', price: 46_000 }
-        binance_adapter = instance_double(MarketData::Adapters::Binance, fetch_market_data: new_mock_market_data)
+      it 'bypasses the cache' do
+        first_result = fetcher.call
 
-        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_adapter)
+        new_data = binance_data.merge(price: 51_000.0)
+        allow(binance_mock).to receive(:fetch_market_data).and_return(new_data)
 
-        result = fetcher.fetch_data
-        expect(result[:market_data].first[:price]).to eq(46_000)
-        expect(cache_store.read(cache_key)[:market_data].first[:price]).to eq(46_000)
-      end
-    end
+        second_result = fetcher.call
 
-    context 'when cache expires' do # rubocop:disable RSpec/MultipleMemoizedHelpers
-      before do
-        cache_store.write(cache_key, { success: true, market_data: [mock_market_data], errors: [] }, expires_in: 2)
-      end
-
-      it 'fetches new data after cache expiry' do
-        sleep 3 # Wait for cache to expire
-
-        new_mock_market_data = { source: 'Binance', price: 47_000 }
-        binance_adapter = instance_double(MarketData::Adapters::Binance, fetch_market_data: new_mock_market_data)
-
-        allow(MarketData::Adapters::Binance).to receive(:new).and_return(binance_adapter)
-
-        result = fetcher.fetch_data
-        expect(result[:market_data].first[:price]).to eq(47_000)
+        expect(second_result).not_to eq(first_result)
+        expect(second_result[:price]).to eq(51_000.0)
+        expect(MarketData::Adapters::Binance).to have_received(:new).twice
       end
     end
   end

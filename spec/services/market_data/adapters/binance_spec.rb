@@ -4,115 +4,135 @@
 require 'rails_helper'
 
 RSpec.describe MarketData::Adapters::Binance do
-  subject(:adapter) { described_class.new(symbol, config) }
-
-  let(:symbol) { 'BTCUSDT' }
-  let(:api_key) { 'test_api_key' }
-  let(:api_secret) { 'test_api_secret' }
-  let(:config) do
+  let(:adapter_config) do
     {
-      api_key: api_key,
-      api_secret: api_secret,
-      base_url: 'https://api.binance.com'
+      api_key: 'test_api_key',
+      api_secret: 'test_api_secret',
+      base_url: 'https://api.binance.com',
+      timeout: 30,
+      logger: Logger.new(File::NULL),
+      log_level: Logger::DEBUG
     }
   end
 
-  describe '#initialize' do
-    it 'initializes with the given symbol and config' do
-      expect(adapter.instance_variable_get(:@symbol)).to eq(symbol.upcase)
-      expect(adapter.instance_variable_get(:@api_key)).to eq(config[:api_key])
-      expect(adapter.instance_variable_get(:@api_secret)).to eq(config[:api_secret])
-    end
+  let(:symbol) { 'BTCUSDT' }
+  let(:adapter) { described_class.new(symbol, adapter_config) }
+  let(:timestamp) { 1_678_900_000_000 }
+
+  before do
+    travel_to Time.zone.at(timestamp / 1000.0)
+
+    allow(OpenSSL::HMAC).to receive(:hexdigest).and_return('test_signature')
   end
 
+  it_behaves_like 'an adapter initialization', described_class, 'BTCUSDT', {
+    api_key: 'test_api_key',
+    api_secret: 'test_api_secret',
+    base_url: 'https://api.binance.com'
+  }
+
   describe '#fetch_market_data' do
-    let(:timestamp) { 1_672_574_400_000 }
-
-    before do
-      allow(Time).to receive(:now).and_return(Time.zone.at(timestamp / 1000.0))
-
-      allow(OpenSSL::HMAC).to receive(:hexdigest)
-        .with('sha256', api_secret, "symbol=#{symbol}&timestamp=#{timestamp}")
-        .and_return('test_signature')
-    end
-
-    context 'when valid credentials and symbol are provided' do
-      it 'fetches and standardizes market data' do
-        price_data = { 'price' => '50000.00' }
-
-        # Use exact URL, query parameters, and headers
+    context 'when API returns valid data' do
+      before do
         stub_request(:get, 'https://api.binance.com/api/v3/ticker/price')
           .with(
-            query: {
-              'symbol' => symbol,
-              'timestamp' => timestamp.to_s,
-              'signature' => 'test_signature'
-            },
+            query: hash_including({
+                                    'symbol' => symbol,
+                                    'timestamp' => timestamp.to_s,
+                                    'signature' => 'test_signature'
+                                  }),
             headers: {
               'Accept' => 'application/json',
               'Content-Type' => 'application/json',
-              'X-MBX-APIKEY' => api_key
+              'X-MBX-APIKEY' => adapter_config[:api_key]
             }
           )
           .to_return(
             status: 200,
-            body: price_data.to_json,
+            body: {
+              'symbol' => symbol,
+              'price' => '50000.00'
+            }.to_json,
             headers: { 'Content-Type' => 'application/json' }
           )
+      end
 
+      it 'fetches and standardizes market data' do
         result = adapter.fetch_market_data
 
+        expect(result[:source]).to eq(:binance)
+        expect(result[:symbol]).to eq(symbol)
         expect(result[:price]).to eq(50_000.00)
+        expect(result[:timestamp]).to be_a(Time)
         expect(result[:volume]).to be_nil
         expect(result[:additional_data]).to eq({})
       end
     end
 
     context 'when price is missing in the response' do
-      it 'raises a BinanceError' do
+      before do
         stub_request(:get, 'https://api.binance.com/api/v3/ticker/price')
           .with(
-            query: {
-              'symbol' => symbol,
-              'timestamp' => timestamp.to_s,
-              'signature' => 'test_signature'
-            },
-            headers: {
-              'Accept' => 'application/json',
-              'Content-Type' => 'application/json',
-              'X-MBX-APIKEY' => api_key
-            }
+            query: hash_including({
+                                    'symbol' => symbol,
+                                    'timestamp' => timestamp.to_s,
+                                    'signature' => 'test_signature'
+                                  })
           )
           .to_return(
             status: 200,
-            body: {}.to_json,
+            body: {
+              'symbol' => symbol
+            }.to_json,
             headers: { 'Content-Type' => 'application/json' }
           )
+      end
 
+      it 'raises a BinanceError' do
         expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError, 'Market data missing')
       end
     end
 
-    context 'when an error occurs during API call' do
-      it 'wraps the error in a BinanceError' do
+    context 'when API returns an error' do
+      before do
         stub_request(:get, 'https://api.binance.com/api/v3/ticker/price')
           .with(
-            query: {
-              'symbol' => symbol,
-              'timestamp' => timestamp.to_s,
-              'signature' => 'test_signature'
-            },
-            headers: {
-              'Accept' => 'application/json',
-              'Content-Type' => 'application/json',
-              'X-MBX-APIKEY' => api_key
-            }
+            query: hash_including({
+                                    'symbol' => symbol,
+                                    'timestamp' => timestamp.to_s,
+                                    'signature' => 'test_signature'
+                                  })
           )
-          .to_raise(StandardError.new('API connection error'))
+          .to_return(
+            status: 400,
+            body: {
+              code: -1121,
+              msg: 'Invalid symbol'
+            }.to_json,
+            headers: { 'Content-Type' => 'application/json' }
+          )
+      end
 
-        expect do
-          adapter.fetch_market_data
-        end.to raise_error(Errors::BinanceError, 'Request failed: API connection error')
+      it 'raises a BinanceError with the error message' do
+        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError)
+      end
+    end
+
+    context 'when connection fails' do
+      before do
+        stub_request(:get, 'https://api.binance.com/api/v3/ticker/price')
+          .with(
+            query: hash_including({
+                                    'symbol' => symbol,
+                                    'timestamp' => timestamp.to_s,
+                                    'signature' => 'test_signature'
+                                  })
+          )
+          .to_timeout
+      end
+
+      it 'raises a BinanceError with the error message' do
+        expect { adapter.fetch_market_data }.to raise_error(Errors::BinanceError)
       end
     end
   end

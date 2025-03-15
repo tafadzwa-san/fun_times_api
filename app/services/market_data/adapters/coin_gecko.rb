@@ -4,12 +4,6 @@
 module MarketData
   module Adapters
     class CoinGecko < BaseAdapter
-      API_URL = 'https://api.coingecko.com/api/v3'
-
-      def initialize(symbol, config = {})
-        super
-      end
-
       def fetch_market_data
         response = get('simple/price', { ids: @symbol, vs_currencies: 'usd' })
 
@@ -42,8 +36,6 @@ module MarketData
       private
 
       def apply_authentication(request)
-        # CoinGecko does not require authentication for free tier
-        # If using a paid plan, add the API key to the query parameters
         request.headers['X-Cg-Pro-Api-Key'] = @api_key
       end
     end
