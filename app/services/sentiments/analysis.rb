@@ -3,35 +3,43 @@
 
 module Sentiments
   class Analysis
-    ADAPTERS = [
-      Sentiments::Adapters::LunarCrush,
-      Sentiments::Adapters::Santiment,
-      Sentiments::Adapters::Senticrypt
-    ].freeze
+    include BaseService
 
-    def initialize(coin_symbol)
-      @coin_symbol = coin_symbol
-    end
+    use_adapters Adapters::LunarCrush, Adapters::Santiment, Adapters::Senticrypt, Adapters::Twitter
+    configure ServicesConfig.sentiment_config
 
-    def fetch_sentiment
-      results = ADAPTERS.map { |adapter| fetch_from_adapter(adapter) }
-
-      valid_results = results.reject { |result| result[:error] }
-      errors = results.select { |result| result[:error] }.map { |e| e.slice(:source, :error) }
-
-      {
-        success: valid_results.any?,
-        sentiment_scores: valid_results,
-        errors: errors.presence || []
-      }
+    def call
+      if @asset_symbol
+        with_caching("sentiment:#{@asset_symbol}") do
+          fetch_sentiment_data
+        end
+      else
+        with_caching('top_buzzing_coins') do
+          find_top_buzzing_coins
+        end
+      end
     end
 
     private
 
-    def fetch_from_adapter(adapter)
-      adapter.new(@coin_symbol).fetch_sentiment
-    rescue StandardError => e
-      { source: adapter.name.demodulize, error: e.message }
+    def fetch_sentiment_data
+      fetch_data_with_adapters(:fetch_sentiment)
+    end
+
+    def find_top_buzzing_coins
+      all_coins_data = {}
+
+      try_adapters_with_config(@adapters, :fetch_buzzing_coins) do |adapter|
+        adapter.fetch_buzzing_coins.each do |coin_data|
+          symbol = coin_data[:symbol]
+          score = coin_data[:score]
+
+          all_coins_data[symbol] ||= 0
+          all_coins_data[symbol] += score
+        end
+      end
+
+      all_coins_data.sort_by { |_, score| -score }.first(20).to_h
     end
   end
 end

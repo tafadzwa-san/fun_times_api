@@ -26,8 +26,8 @@ module BaseService
 
     # Define initializer in the including class
     base.class_eval do
-      def initialize(asset_symbol, options = {})
-        @asset_symbol = asset_symbol.upcase
+      def initialize(asset_symbol = nil, options = {})
+        @asset_symbol = asset_symbol&.upcase
         @options = options
         @config = self.class.config
         @force_refresh = options[:force_refresh] || false

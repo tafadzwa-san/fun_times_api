@@ -1,44 +1,55 @@
 # typed: false
 # frozen_string_literal: true
 
-require 'faraday'
-require 'json'
-
 module Sentiments
   module Adapters
-    class LunarCrush
-      API_URL = 'https://api.lunarcrush.com/v2'
-      API_KEY = ENV.fetch('LUNARCRUSH_API_KEY', nil)
-
-      def initialize(coin_symbol)
-        @coin_symbol = coin_symbol
-      end
-
+    class LunarCrush < BaseAdapter
       def fetch_sentiment
-        response = request_sentiment
-        raise Errors::LunarCrushError, 'Failed to fetch sentiment' unless response.success?
+        response = get('/assets', { symbol: @symbol })
 
-        parse_response(response.body)
-      rescue Faraday::ConnectionFailed
-        raise Errors::LunarCrushError, 'API is unreachable'
-      rescue JSON::ParserError
-        raise Errors::LunarCrushError, 'Invalid response'
+        raise Errors::LunarCrushError, 'Sentiment data missing' if response['data'].blank?
+
+        standardize_sentiment_data(response['data'].first)
       rescue StandardError => e
         raise Errors::LunarCrushError, e.message
       end
 
-      private
+      def fetch_buzzing_coins
+        response = get('/assets', { limit: 20, sort: 'galaxy_score' })
 
-      def request_sentiment
-        Faraday.get("#{API_URL}/assets", { data: 'metrics', key: API_KEY, symbol: @coin_symbol })
+        raise Errors::LunarCrushError, 'Sentiment data missing' if response['data'].blank?
+
+        response['data'].map do |coin_data|
+          {
+            symbol: coin_data['symbol'],
+            score: extract_sentiment_score(coin_data)
+          }
+        end
+      rescue StandardError => e
+        raise Errors::LunarCrushError, e.message
       end
 
-      def parse_response(body)
-        data = JSON.parse(body)
-        score = data.dig('data', 0, 'galaxy_score')
-        raise Errors::LunarCrushError, 'Score missing' unless score
+      protected
 
-        { source: 'LunarCrush', score: score }
+      def extract_sentiment_score(data)
+        data['galaxy_score'].to_f
+      end
+
+      def extract_additional_data(data)
+        {
+          alt_rank: data['alt_rank'],
+          volatility: data['volatility']
+        }
+      end
+
+      def api_error_class
+        Errors::LunarCrushError
+      end
+
+      private
+
+      def apply_authentication(request)
+        request.params['key'] = @api_key
       end
     end
   end

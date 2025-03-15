@@ -36,22 +36,22 @@ module ServicesConfig
       {
         adapters: {
           lunar_crush: {
-            api_url: ENV.fetch('LUNARCRUSH_API_URL', 'https://api.lunarcrush.com/v2'),
+            base_url: ENV.fetch('LUNARCRUSH_API_URL', 'https://api.lunarcrush.com/v2'),
             api_key: ENV.fetch('LUNARCRUSH_API_KEY', nil),
             timeout: ENV.fetch('LUNARCRUSH_API_TIMEOUT', common_config[:timeout])
           },
           santiment: {
-            api_url: ENV.fetch('SANTIMENT_API_URL', 'https://api.santiment.net/graphql'),
+            base_url: ENV.fetch('SANTIMENT_API_URL', 'https://api.santiment.net/graphql'),
             api_key: ENV.fetch('SANTIMENT_API_KEY', nil),
             timeout: ENV.fetch('SANTIMENT_API_TIMEOUT', common_config[:timeout])
           },
           senticrypt: {
-            api_url: ENV.fetch('SENTICRYPT_API_URL', nil),
+            base_url: ENV.fetch('SENTICRYPT_API_URL', 'https://api.senticrypt.com'),
             api_key: ENV.fetch('SENTICRYPT_API_KEY', nil),
             timeout: ENV.fetch('SENTICRYPT_API_TIMEOUT', common_config[:timeout])
           },
           twitter: {
-            api_url: ENV.fetch('TWITTER_API_URL', 'https://api.twitter.com/2/tweets/search/recent'),
+            base_url: ENV.fetch('TWITTER_API_URL', 'https://api.twitter.com/2/tweets/search/recent'),
             api_key: ENV.fetch('TWITTER_API_KEY', nil),
             timeout: ENV.fetch('TWITTER_API_TIMEOUT', common_config[:timeout])
           }
