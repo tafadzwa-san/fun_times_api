@@ -25,11 +25,13 @@ RSpec.describe 'User Authentication', type: :request do
     end
 
     it 'logs out the user and revokes the token' do
+      old_jti = user.jti
+
       delete '/users/sign_out', headers: { 'Authorization' => "Bearer #{token}" }
 
       expect(response).to have_http_status(:no_content)
       user.reload
-      expect(user.jti).not_to eq(token) # Ensure JTI changes after logout
+      expect(user.jti).not_to eq(old_jti) # Ensure JTI changes after logout
     end
   end
 end
