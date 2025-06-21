@@ -19,7 +19,7 @@ module ServicesConfig
             timeout: ENV.fetch('KUCOIN_API_TIMEOUT', common_config[:timeout])
           },
           coin_gecko: {
-            api_url: ENV.fetch('COINGECKO_API_URL', 'https://api.coingecko.com/api/v3'),
+            base_url: ENV.fetch('COINGECKO_API_URL', 'https://api.coingecko.com/api/v3'),
             timeout: ENV.fetch('COINGECKO_API_TIMEOUT', common_config[:timeout])
           },
           binance: {
