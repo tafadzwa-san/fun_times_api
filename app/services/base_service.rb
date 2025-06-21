@@ -39,7 +39,8 @@ module BaseService
   # === Adapter Management ===
 
   # Try multiple adapters with the given configuration
-  # Returns the first successful result
+  # Returns `[results, errors]` containing data and errors for all
+  # attempted adapters
   def try_adapters_with_config(adapters, method_name, args = nil)
     results = []
     errors = []
