@@ -4,6 +4,13 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
+# Provide defaults for secrets used in tests
+ENV['DEVISE_JWT_SECRET_KEY'] ||= 'test_secret'
+ENV['BINANCE_API_KEY'] ||= 'key'
+ENV['BINANCE_API_SECRET'] ||= 'secret'
+ENV['KUCOIN_API_KEY'] ||= 'key'
+ENV['KUCOIN_API_SECRET'] ||= 'secret'
+ENV['KUCOIN_API_PASSPHRASE'] ||= 'passphrase'
 require_relative '../config/environment'
 
 # Prevent database truncation if the environment is production

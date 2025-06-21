@@ -83,6 +83,9 @@ RSpec.describe MarketData::Fetcher do
       common_config: { log_level: 'INFO', timeout: 30 },
       market_data_config: market_data_config
     )
+
+    # Reconfigure class with stubbed config after stubbing ServicesConfig
+    described_class.configure(market_data_config)
   end
 
   describe 'initialization' do

@@ -6,6 +6,11 @@ require 'rails_helper'
 RSpec.describe Trading::Adapters::Binance do
   subject(:adapter) { described_class.new('BTCUSDT', action, 0.5, price) }
 
+  before do
+    stub_const('Trading::Adapters::Binance::API_KEY', 'key')
+    stub_const('Trading::Adapters::Binance::API_SECRET', 'secret')
+  end
+
   let(:action) { 'BUY' }
   let(:price) { nil } # Market order
 

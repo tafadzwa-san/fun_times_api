@@ -6,6 +6,12 @@ require 'rails_helper'
 RSpec.describe Trading::Adapters::KuCoin do
   subject(:adapter) { described_class.new('BTC-USDT', action, 0.5, price) }
 
+  before do
+    stub_const('Trading::Adapters::KuCoin::API_KEY', 'key')
+    stub_const('Trading::Adapters::KuCoin::API_SECRET', 'secret')
+    stub_const('Trading::Adapters::KuCoin::API_PASSPHRASE', 'passphrase')
+  end
+
   let(:action) { 'BUY' }
   let(:price) { nil } # Market order
 
